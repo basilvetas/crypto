@@ -98,15 +98,19 @@ def poorQuadSieve(n):
           
     i = i+1
 
+  # once we know the prime factors we need to find y
   for f in factor_map:    
     temp = factor_map[f]
     temp_f = f
+
+    # reduce the power to 2 for all factors
     while (temp > 2):
       temp_f *= f
       temp -= 2
     del factor_map[f]
     factor_map[temp_f] = 2
     
+  # get y by multiplying each factor we have left in our map
   y = 1;
   for g in factor_map:
     y *= g
