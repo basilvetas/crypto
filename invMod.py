@@ -1,6 +1,7 @@
+# Basil Vetas
+# 3/9/16
 
 # Computes 'a' modulo 'n'
-### BROKEN
 def invMod(a,n):
   #this finds the inverse of a mod n
   r1 = n
@@ -60,11 +61,14 @@ def poorQuadSieve(n):
   sqrtN = isqrt(n)
   i = 1
   factoredFlag = False
+  factor_map = {} # a list of prime factors mapped to their powers
+  x = 0
+
   while (factoredFlag == False):
-    x = sqrtN + i
-    x_sq = pow(x, 2, n)
-    prime_factors = factor(x_sq)
-    factor_map = {}
+    a = sqrtN + i
+    a_sq = pow(a, 2, n)
+    prime_factors = factor(a_sq)  
+    x = a
 
     # check if list is has even number
     if((len(prime_factors) % 2) == 0 ):
@@ -79,7 +83,7 @@ def poorQuadSieve(n):
           count += 1          
         else: # otherwise check if we have an even number and move to the next prime factor
           if((count % 2) == 0):
-            factor_map[current] = count # returns a list of prime factors mapped to their powers
+            factor_map[current] = count 
             # print "factor_map", factor_map            
             # factoredFlag = True
             count = 1
@@ -89,12 +93,28 @@ def poorQuadSieve(n):
 
       # at the end of the for loop if our last count is even, we are done factoring
       if((count % 2) == 0):
-        factor_map[current] = count # returns a list of prime factors mapped to their powers
+        factor_map[current] = count 
         factoredFlag = True
-      
-    print factor_map
+          
     i = i+1
 
+  for f in factor_map:    
+    temp = factor_map[f]
+    temp_f = f
+    while (temp > 2):
+      temp_f *= f
+      temp -= 2
+    del factor_map[f]
+    factor_map[temp_f] = 2
+    
+  y = 1;
+  for g in factor_map:
+    y *= g
+
+  factor_one = x - y
+  factor_two = x + y
+
+  return [factor_one, factor_two]
 
 
 # Helper function for factoring
