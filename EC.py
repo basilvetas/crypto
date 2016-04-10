@@ -90,10 +90,12 @@ def addPts(P, Q, Elist, char):
 				return [float("inf"), float("inf")]
 	#next do the real work.
 	if (char > 0):  #do the positive characteristic case
-		A = (yQ - yP)/(xQ - xP)
-
+		deltaXinv = invMod(xQ - xP, char)
+		deltaXinv = deltaXinv%char
 	else: 
-		A = 0 # THIS IS WRONG
+		deltaXinv = 0 # THIS IS WRONG
+
+	A = (yQ - yP)*deltaXinv
 
 	new_x = pow(A,2) - xP - xQ
 	new_y = A*(xP - new_x) - yP
@@ -105,56 +107,43 @@ def addPts(P, Q, Elist, char):
 	return [new_x, new_y]
 
 
-# Calculates nP
+# Calculates nP (adds P to itself n times)
 def nP(n, P, Elist, char):
 	i = 1
-	while(i < n/2 + 1):
+	while(i < n/2 + 1):	# double i until we would exceed n
 		i *= 2
 
-	# print "i", i
-	rem = n - i
-	# print "rem", rem
+	rem = n - i # get the remainder after doubling
+	doubles = nPdouble(n, P, Elist, char)	# double recursively until we can't
 
-	doubles = nPdouble(n, P, Elist, char)
-	# return 0
-
-	if(rem == 0):
+	if(rem == 0):	# if remainder is zero, we are done
 		return doubles
-	else:
+	else:	# otherwise, add P 'rem' more times with recursion
 		return addPts(doubles, nP(rem, P, Elist, char), Elist, char)
 
 
+# Helper method that doubles P n times recursively
 def nPdouble(n, P, Elist, char):
 	if(n == 1):
 		return P
-	else:
+	else:	# recursively doubles nP as many times as possible
 		return nPdouble(n/2, doublePt(P, Elist, char), Elist, char)	
 
-
-#  1P  
-# 6     
-#  2P
-# 5
-#  4P
-# 4
-#  8P
-# 3
-#  16P
-# 2
-#  32P
-# 1
-#  64P
-
-#  66
-
-# 70
-# 35 
-
-
-
-
-
 # http://crypto.stackexchange.com/questions/3907/how-does-one-calculate-the-scalar-multiplication-on-elliptic-curves
+ 
+# A naive discrete log function for elliptic curves. 
+# In other words, given Q = nP, this loops and finds the value n.
+def disLogEC(Q, P, Elist, char):
+	xP = P[0]
+	yP = P[1]
+	xQ = Q[0]
+	yQ = Q[1]
+	n = 0
+	while(xP != xQ or yP != yQ):
+		n += 1
+		xP, yP = nP(n, P, Elist, char)
+		
+	return n
 
 # Finds the inverse of a mod n
 def invMod(a,n):
@@ -177,8 +166,27 @@ def invMod(a,n):
     return 0
   return t1
 
+# A class that represents a point on an elliptic curve
+class ECPt:
+	def __init__(self, P, Elist, char):		
+		if(isPtOnC(P, Elist, char)):
+			self.pt = P
+			self.EC = Elist
+			self.ch = char
+		else:
+			print "P is not a point on the specified Elliptic Curve, try again."
+				
+	# Override reverse add
+	def __add__(self, Q):
+		if(isPtOnC(Q.pt, self.EC, self.ch)):						
+			return addPts(self.pt, Q.pt, self.EC, self.ch)
+		else:
+			print "these points are not on the same elliptic curve"    
 
+	def __mul__(self, n):
+		return nP(n, self.pt, self.EC, self.ch)
 
-
+	def __rmul__(self, n):
+		return nP(n, self.pt, self.EC, self.ch)
 
 
