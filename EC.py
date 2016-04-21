@@ -3,9 +3,11 @@
 
 # Adding and Doubling Elliptic Curve Math!
 # We always assume our elliptic curve is written as y^2 = x^3 + ax^2 + bx + c
+# Link below has a good example problem that I used for testing values of nP
+# http://crypto.stackexchange.com/questions/3907/how-does-one-calculate-the-scalar-multiplication-on-elliptic-curves
 
 # Note, if char is 0, we should use for our point:
-# from fractions import Fraction
+from fractions import Fraction
 # Fraction(1,2) + Fraction(1,3)
 
 # A function that checks whether a point [x,y] lies on the elliptic curve specified by the values [a,b,c]
@@ -43,28 +45,28 @@ def doublePt(P, Elist, char):
   inf = float("inf")
   if (y == inf): # first handle the case if we are doubling the point at infinity
       return [float("inf"), float("inf")]
-  if (y%char == 0): # next handle the case if our tangent line is vertical
+  if (char > 0 and y%char == 0): # next handle the case if our tangent line is vertical
     return [float("inf"), float("inf")]
   # now do the real work, remember
   # A = (3x^2 + 2ax + b)/(2y), so we need to invert 2y
+  A = 0
+
   if (char > 0):  # first do the positive characteristic case
   	twoyinv = invMod(2*y, char)
   	twoyinv = twoyinv%char
-  else:
-  	twoyinv = 0	# THIS IS WRONG
-
-  A = (3*pow(x,2) + 2*a*x + b)*(twoyinv)
-  if (char > 0):
+  	A = (3*pow(x,2) + 2*a*x + b)*(twoyinv)
   	A = A%char
+  else:  	
+  	A = Fraction(3*pow(x,2) + 2*a*x + b, 2*y)
+  
+  new_x = pow(A,2)-a - 2*x
+  new_y = A*(x-new_x) -y
 
-	new_x = pow(A,2) - 2*x
-	new_y = A*(x - new_x) - y
+  if(char > 0):
+  	new_x = new_x%char
+  	new_y = new_y%char
 
-	if(char > 0):
-		new_x = new_x%char
-		new_y = new_y%char
-
-	return [new_x, new_y]
+  return [new_x, new_y]
 
 
 # A function that adds two arbitrary points on the elliptic curve.
@@ -73,6 +75,11 @@ def addPts(P, Q, Elist, char):
 	yP = P[1]
 	xQ = Q[0]
 	yQ = Q[1]
+
+	# if points are the same, double them
+	if((xP == xQ) and (yP == yQ)):
+		return doublePt(P, Elist, char)
+
 	a = Elist[0]
 	b = Elist[1]
 	c = Elist[2]
@@ -89,15 +96,17 @@ def addPts(P, Q, Elist, char):
 				#agree, then we are going to add to infinity.
 				return [float("inf"), float("inf")]
 	#next do the real work.
+	A = 0
 	if (char > 0):  #do the positive characteristic case
 		deltaXinv = invMod(xQ - xP, char)
 		deltaXinv = deltaXinv%char
+		A = (yQ - yP)*deltaXinv
+		A = A%char
 	else: 
-		deltaXinv = 0 # THIS IS WRONG
+		A = Fraction(yQ - yP, xQ - xP)
 
-	A = (yQ - yP)*deltaXinv
 
-	new_x = pow(A,2) - xP - xQ
+	new_x = pow(A,2)-a - xP - xQ
 	new_y = A*(xP - new_x) - yP
 
 	if(char > 0):
@@ -129,8 +138,6 @@ def nPdouble(n, P, Elist, char):
 	else:	# recursively doubles nP as many times as possible
 		return nPdouble(n/2, doublePt(P, Elist, char), Elist, char)	
 
-# http://crypto.stackexchange.com/questions/3907/how-does-one-calculate-the-scalar-multiplication-on-elliptic-curves
- 
 # A naive discrete log function for elliptic curves. 
 # In other words, given Q = nP, this loops and finds the value n.
 def disLogEC(Q, P, Elist, char):
@@ -167,6 +174,10 @@ def invMod(a,n):
   return t1
 
 # A class that represents a point on an elliptic curve
+# Constructor takes two lists: One defininf a point, and one
+# defining an eliptic curve. It also takes an integer--char. 
+# If char is zero, no modular arithmetic is used. Otherwise
+# everything is mod <char>.
 class ECPt:
 	def __init__(self, P, Elist, char):		
 		if(isPtOnC(P, Elist, char)):
@@ -179,14 +190,15 @@ class ECPt:
 	# Override reverse add
 	def __add__(self, Q):
 		if(isPtOnC(Q.pt, self.EC, self.ch)):						
-			return addPts(self.pt, Q.pt, self.EC, self.ch)
+			return ECPt(addPts(self.pt, Q.pt, self.EC, self.ch),self.EC, self.ch)
 		else:
 			print "these points are not on the same elliptic curve"    
 
 	def __mul__(self, n):
-		return nP(n, self.pt, self.EC, self.ch)
+		return ECPt(nP(n, self.pt, self.EC, self.ch), self.EC, self.ch)
 
 	def __rmul__(self, n):
-		return nP(n, self.pt, self.EC, self.ch)
+		return ECPt(nP(n, self.pt, self.EC, self.ch), self.EC, self.ch)
+
 
 
