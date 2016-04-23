@@ -83,6 +83,7 @@ def addPts(P, Q, Elist, char):
 	a = Elist[0]
 	b = Elist[1]
 	c = Elist[2]
+
 	inf = float("inf")
 	#first we handle all the easy cases
 	if (yP == inf):
@@ -97,16 +98,15 @@ def addPts(P, Q, Elist, char):
 				return [float("inf"), float("inf")]
 	#next do the real work.
 	A = 0
-	if (char > 0):  #do the positive characteristic case
-		deltaXinv = invMod(xQ - xP, char)
-		deltaXinv = deltaXinv%char
+	if (char > 0):  #do the positive characteristic case		
+		deltaXinv = invMod(xQ - xP, char)		
+		deltaXinv = deltaXinv%char		
 		A = (yQ - yP)*deltaXinv
-		A = A%char
+		A = A%char		
 	else: 
 		A = Fraction(yQ - yP, xQ - xP)
 
-
-	new_x = pow(A,2)-a - xP - xQ
+	new_x = pow(A,2) - xP - xQ
 	new_y = A*(xP - new_x) - yP
 
 	if(char > 0):
@@ -154,24 +154,25 @@ def disLogEC(Q, P, Elist, char):
 
 # Finds the inverse of a mod n
 def invMod(a,n):
-  r1 = n
-  r2 = a
-  tempR = 0
-  t1 = 0
-  t2 = 1
-  tempT = 0
-  q = 0
-  while (r2 > 0):
-    q = r1//r2
-    tempT = t2
-    t2 = t1 - q*t2
-    t1 = tempT
-    tempR = r2
-    r2 = r1 - q*r2
-    r1 = tempR
-  if (r1 > 1):
-    return 0
-  return t1
+	a = a%n # make sure we are using a positive number
+	r1 = n
+	r2 = a
+	tempR = 0
+	t1 = 0
+	t2 = 1
+	tempT = 0
+	q = 0
+	while (r2 > 0):
+		q = r1//r2
+		tempT = t2
+		t2 = t1 - q*t2
+		t1 = tempT
+		tempR = r2
+		r2 = r1 - q*r2
+		r1 = tempR
+	if (r1 > 1):
+		return 0
+	return t1
 
 # A class that represents a point on an elliptic curve
 # Constructor takes two lists: One defininf a point, and one
