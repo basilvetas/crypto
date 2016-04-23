@@ -106,7 +106,7 @@ def addPts(P, Q, Elist, char):
 	else: 
 		A = Fraction(yQ - yP, xQ - xP)
 
-	new_x = pow(A,2) - xP - xQ
+	new_x = pow(A,2) - a - xP - xQ
 	new_y = A*(xP - new_x) - yP
 
 	if(char > 0):
